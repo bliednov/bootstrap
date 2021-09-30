@@ -1,2 +1,2 @@
 # bootstrap
-The bootstrapping script to install the essential tools and apps.
+Bootstrap script to install the essential tools and apps.

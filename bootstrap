@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+dotfiles_dir=~/.dotfiles
+
+check_os() {
+    os=`uname`
+    [[ $os == "Darwin" ]] && return 0
+    [[ $os == "Linux" ]] && $(. /etc/lsb-release && [[ $DISTRIB_ID == "Ubuntu" && $DISTRIB_RELEASE == "20.04" ]]) && return 0
+    [[ $os != "Linux" ]] && echo "Unsupported OS: $os"
+    [[ $os == "Linux" ]] && $(. /etc/lsb-release && echo "Unsupported Linux distribution: $DESTRIB_DESCRIPTION")
+    echo "Supported: Darwin/Linux(Ubuntu 20.04)"
+    exit 1
+}
+
+install_homebrew() {
+    is_linux=$([[ `uname` == "Linux" ]] && echo $?)
+    [[ `which brew &>/dev/null` ]] && return 0
+    [[ $is_linux && `ls /home/linuxbrew/.linuxbrew/bin/brew &>/dev/null` ]] && return 0
+    [[ $is_linux ]] && sudo apt update && sudo apt upgrade -y
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+}
+
+install_gcloud() {
+    brew install --cask google-cloud-sdk
+}
+
+signin_gcloud() {
+    read -p "Email:" gcloud_email
+    read -p "Project:" gcloud_project
+    gcloud auth login --account=$gcloud_email
+    gcloud init --console-only --account=$gcloud_email --configuration=default --project=$gcloud_project
+}
+
+setup_gcloud() {
+    while true; do
+	read -p "Do you wish to initialized gcloud? (y/n):" yn
+        case $yn in
+            [Yy]* ) signin_gcloud;;
+            [Nn]* ) return;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+}
+
+sync_dotfiles_repo() {
+    echo "Syncing the dotfiles repo"
+    if test -d $dotfiles_dir
+    then
+        (cd $dotfiles_dir; git fetch --all; git pull origin master --ff-only)
+    else
+        gcloud source repos clone dotfiles $dotfiles_dir
+    fi
+}
+
+initialize_dotfiles() {
+    sync_dotfiles_repo
+    (cd $dotfiles_dir; ./install)
+}
+
+setup_dotfiles() {
+    while true; do
+	read -p "Do you wish to initialize dotfiles? (y/n):" yn
+        case $yn in
+            [Yy]* ) initialize_dotfiles;;
+            [Nn]* ) return;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+}
+
+check_os
+install_homebrew
+install_gcloud
+setup_gcloud
+sync_dotfiles_repo
+setup_dotfiles
