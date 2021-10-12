@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
 
 dotfiles_dir=~/.dotfiles
+os=`uname`
+is_linux=$([[ $os == "Linux" ]] && echo $?)
+is_darwin=$([[ $os == "Darwin" ]] && echo $?)
+supported_linux_distrib_id="Ubuntu"
+supported_linux_distrib_release="20.04"
 
 check_os() {
-    os=`uname`
-    [[ $os == "Darwin" ]] && return 0
-    [[ $os == "Linux" ]] && $(. /etc/lsb-release && [[ $DISTRIB_ID == "Ubuntu" && $DISTRIB_RELEASE == "20.04" ]]) && return 0
-    [[ $os != "Linux" ]] && echo "Unsupported OS: $os"
-    [[ $os == "Linux" ]] && $(. /etc/lsb-release && echo "Unsupported Linux distribution: $DESTRIB_DESCRIPTION")
-    echo "Supported: Darwin/Linux(Ubuntu 20.04)"
+    [[ $is_darwin ]] && return 0
+    [[ $is_linux ]] && $(. /etc/lsb-release && [[ $DISTRIB_ID == $supported_linux_distrib_id && $DISTRIB_RELEASE == $supported_linux_distrib_release ]]) && return 0
+    [[ ! $is_linux ]] && echo "Unsupported OS: $os"
+    [[ $is_linux ]] && $(. /etc/lsb-release && echo "Unsupported Linux distribution: $DESTRIB_DESCRIPTION")
+    echo "Supported: Darwin/Linux($supported_linux_distrib_id $supported_linux_distrib_release)"
     exit 1
 }
 
 install_homebrew() {
-    is_linux=$([[ `uname` == "Linux" ]] && echo $?)
     [[ `which brew &>/dev/null` ]] && return 0
     [[ $is_linux && `ls /home/linuxbrew/.linuxbrew/bin/brew &>/dev/null` ]] && return 0
     [[ $is_linux ]] && sudo apt update && sudo apt upgrade -y
@@ -22,7 +25,8 @@ install_homebrew() {
 }
 
 install_gcloud() {
-    brew install --cask google-cloud-sdk
+    [[ $is_darwin ]] && brew install --cask google-cloud-sdk
+    [[ $is_linux ]] && sudo snap install google-cloud-sdk --classic
 }
 
 signin_gcloud() {
