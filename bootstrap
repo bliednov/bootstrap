@@ -18,6 +18,7 @@ install_homebrew() {
     [[ $is_linux && `ls /home/linuxbrew/.linuxbrew/bin/brew &>/dev/null` ]] && return 0
     [[ $is_linux ]] && sudo apt update && sudo apt upgrade -y
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    [[ $is_linux ]] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 }
 
 install_gcloud() {
