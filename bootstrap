@@ -38,7 +38,7 @@ signin_gcloud() {
 
 setup_gcloud() {
     while true; do
-	read -p "Do you wish to initialized gcloud? (y/n):" yn
+	read -p "Do you wish to initialize gcloud? (y/n):" yn
         case $yn in
             [Yy]* ) signin_gcloud;;
             [Nn]* ) return;;
