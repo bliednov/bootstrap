@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 dotfiles_dir=~/.dotfiles
 os=`uname`
 is_linux=$([[ $os == "Linux" ]] && echo $?)
