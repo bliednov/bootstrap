@@ -17,7 +17,7 @@ check_os() {
 }
 
 install_homebrew() {
-    [[ `which brew &>/dev/null` ]] && return 0
+    [[ `command -v brew` ]] && return 0
     [[ $is_linux && `ls /home/linuxbrew/.linuxbrew/bin/brew &>/dev/null` ]] && return 0
     [[ $is_linux ]] && sudo apt update && sudo apt upgrade -y
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
