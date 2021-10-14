@@ -2,33 +2,55 @@
 
 set -euo pipefail
 
-dotfiles_dir=~/.dotfiles
-os=`uname`
-is_linux=$([[ $os == "Linux" ]] && echo $?)
-is_darwin=$([[ $os == "Darwin" ]] && echo $?)
+os=$(uname)
 supported_linux_distrib_id="Ubuntu"
 supported_linux_distrib_release="20.04"
 
+is_available() {
+    [[ $(command -v $0 &>/dev/null) ]] && return 0 || return 1
+}
+
+exists() {
+    [[ $(ls $0 &>/dev/null) ]] && return 0 || return 1
+}
+
+is_linux() {
+    [[ $os == "Linux" ]] && return 0 || return 1
+}
+
+is_darwin() {
+    [[ $os == "Darwin" ]] && return 0 || return 1
+}
+
 check_os() {
-    [[ $is_darwin ]] && return 0
-    [[ $is_linux ]] && $(. /etc/lsb-release && [[ $DISTRIB_ID == $supported_linux_distrib_id && $DISTRIB_RELEASE == $supported_linux_distrib_release ]]) && return 0
-    [[ ! $is_linux ]] && echo "Unsupported OS: $os"
-    [[ $is_linux ]] && $(. /etc/lsb-release && echo "Unsupported Linux distribution: $DESTRIB_DESCRIPTION")
+    is_darwin && return 0
+    is_linux && $(. /etc/lsb-release && [[ $DISTRIB_ID == $supported_linux_distrib_id && $DISTRIB_RELEASE == $supported_linux_distrib_release ]]) && return 0
+    ! is_linux && echo "Unsupported OS: $os"
+    is_linux && $(. /etc/lsb-release && echo "Unsupported Linux distribution: $DESTRIB_DESCRIPTION")
     echo "Supported: Darwin/Linux($supported_linux_distrib_id $supported_linux_distrib_release)"
     exit 1
 }
 
 install_homebrew() {
-    [[ `command -v brew` ]] && return 0
-    [[ $is_linux && `ls /home/linuxbrew/.linuxbrew/bin/brew &>/dev/null` ]] && return 0
-    [[ $is_linux ]] && sudo apt update && sudo apt upgrade -y
+    eval_homebrew() {
+        is_linux && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    }
+
+    is_available brew && return 0
+    is_linux && exists /home/linuxbrew/.linuxbrew/bin/brew && eval_homebrew && return 0
+    is_linux && sudo apt update && sudo apt upgrade -y
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    [[ $is_linux ]] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    eval_homebrew
+}
+
+install_chezmoi() {
+    is_available chezmoi && return 0
+    brew install -q chezmoi
 }
 
 install_gcloud() {
-    [[ $is_darwin ]] && brew install --cask google-cloud-sdk
-    [[ $is_linux ]] && sudo snap install google-cloud-sdk --classic
+    is_darwin && brew install --cask google-cloud-sdk
+    is_linux && sudo snap install google-cloud-sdk --classic
 }
 
 signin_gcloud() {
@@ -51,6 +73,7 @@ setup_gcloud() {
 
 sync_dotfiles_repo() {
     echo "Syncing the dotfiles repo"
+    dotfiles_dir=$(chezmoi source-path)
     if test -d $dotfiles_dir
     then
         (cd $dotfiles_dir; git fetch --all; git pull origin master --ff-only)
@@ -77,6 +100,7 @@ setup_dotfiles() {
 
 check_os
 install_homebrew
+install_chezmoi
 install_gcloud
 setup_gcloud
 sync_dotfiles_repo
