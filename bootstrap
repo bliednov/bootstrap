@@ -32,25 +32,14 @@ check_os() {
 }
 
 install_homebrew() {
-    eval_homebrew() {
-        is_linux && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-    }
-
     is_available brew && return 0
-    is_linux && exists /home/linuxbrew/.linuxbrew/bin/brew && eval_homebrew && return 0
-    is_linux && sudo apt update && sudo apt upgrade -y
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    eval_homebrew
-}
-
-update_homebrew() {
-    brew update
-    brew upgrade
 }
 
 install_chezmoi() {
     is_available chezmoi && return 0
-    brew install -q chezmoi
+    is_darwin && brew install -q chezmoi
+    is_linux && sudo snap install chezmoi --classic
 }
 
 install_gcloud() {
@@ -104,8 +93,7 @@ setup_dotfiles() {
 }
 
 check_os
-install_homebrew
-update_homebrew
+is_darwin && install_homebrew
 install_chezmoi
 install_gcloud
 setup_gcloud
