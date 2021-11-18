@@ -50,6 +50,11 @@ install_gcloud() {
     is_linux && sudo snap install google-cloud-sdk --classic
 }
 
+install_git() {
+    is_darwin && brew install git
+    is_linux && sudo apt install -y git
+}
+
 signin_gcloud() {
     read -p "Email:" gcloud_email
     read -p "Project:" gcloud_project
@@ -99,6 +104,7 @@ check_os
 is_darwin && install_homebrew
 install_chezmoi
 install_gcloud
+install_git
 setup_gcloud
 sync_dotfiles_repo
 setup_dotfiles
