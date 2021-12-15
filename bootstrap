@@ -40,12 +40,6 @@ install_homebrew() {
     eval "$(/opt/homebrew/bin/brew shellenv)"
 }
 
-install_chezmoi() {
-    is_available chezmoi && return 0
-    is_darwin && brew install -q chezmoi && return 0
-    is_linux && sudo snap install chezmoi --classic
-}
-
 install_gcloud() {
     is_darwin && brew install --cask google-cloud-sdk && return 0
     is_linux && sudo snap install google-cloud-sdk --classic
@@ -76,7 +70,7 @@ setup_gcloud() {
 
 sync_dotfiles_repo() {
     echo "Syncing the dotfiles repo"
-    dotfiles_dir=$(chezmoi source-path)
+    dotfiles_dir=$HOME/.local/share/chezmoi
     if test -d $dotfiles_dir
     then
         (cd $dotfiles_dir; git fetch --all; git pull origin master --ff-only)
@@ -103,7 +97,6 @@ setup_dotfiles() {
 
 check_os
 is_darwin && install_homebrew
-install_chezmoi
 install_gcloud
 install_git
 setup_gcloud
