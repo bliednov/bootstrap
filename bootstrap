@@ -42,17 +42,17 @@ install_homebrew() {
 
 install_chezmoi() {
     is_available chezmoi && return 0
-    is_darwin && brew install -q chezmoi
+    is_darwin && brew install -q chezmoi && return 0
     is_linux && sudo snap install chezmoi --classic
 }
 
 install_gcloud() {
-    is_darwin && brew install --cask google-cloud-sdk
+    is_darwin && brew install --cask google-cloud-sdk && return 0
     is_linux && sudo snap install google-cloud-sdk --classic
 }
 
 install_git() {
-    is_darwin && brew install git
+    is_darwin && brew install git && return 0
     is_linux && sudo apt install -y git
 }
 
