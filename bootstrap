@@ -4,7 +4,7 @@ set -euo pipefail
 
 os=$(uname)
 supported_linux_distrib_id="Ubuntu"
-supported_linux_distrib_release="20.04"
+supported_linux_distrib_release="22.04"
 
 is_available() {
     if command -v $1 &>/dev/null; then
@@ -40,28 +40,37 @@ install_homebrew() {
     eval "$(/opt/homebrew/bin/brew shellenv)"
 }
 
-install_gcloud() {
-    is_darwin && brew install --cask google-cloud-sdk && return 0
-    is_linux && sudo snap install google-cloud-sdk --classic
+install_gh_linux() {
+    (type -p wget >/dev/null || (sudo apt update && sudo apt-get install wget -y))
+    sudo mkdir -p -m 755 /etc/apt/keyrings
+    wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
+    sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    sudo apt update
+    sudo apt install gh -y
+}
+
+install_gh() {
+    is_available gh && return 0
+    is_darwin && brew install gh && return 0
+    is_linux && install_gh_linux
 }
 
 install_git() {
+    is_available git && return 0
     is_darwin && brew install git && return 0
     is_linux && sudo apt install -y git
 }
 
-signin_gcloud() {
-    read -p "Email:" gcloud_email
-    read -p "Project:" gcloud_project
-    gcloud auth login --account=$gcloud_email
-    gcloud init --console-only --account=$gcloud_email --configuration=default --project=$gcloud_project
+signin_gh() {
+    gh auth login
 }
 
-setup_gcloud() {
+setup_gh() {
     while true; do
-	read -p "Do you wish to initialize gcloud? (y/n):" yn
+	read -p "Do you wish to initialize GitHub CLI? (y/n):" yn
         case $yn in
-            [Yy]* ) signin_gcloud;;
+            [Yy]* ) signin_gh;;
             [Nn]* ) return;;
             * ) echo "Please answer yes or no.";;
         esac
@@ -75,7 +84,8 @@ sync_dotfiles_repo() {
     then
         (cd $dotfiles_dir; git fetch --all; git pull origin master --ff-only)
     else
-        gcloud source repos clone dotfiles $dotfiles_dir
+        mkdir -p $HOME/.local/share
+        gh repo clone dotfiles $dotfiles_dir
     fi
 }
 
@@ -97,8 +107,8 @@ setup_dotfiles() {
 
 check_os
 is_darwin && install_homebrew
-install_gcloud
 install_git
-setup_gcloud
+install_gh
+setup_gh
 sync_dotfiles_repo
 setup_dotfiles
